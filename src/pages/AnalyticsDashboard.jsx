@@ -38,7 +38,7 @@ function AnalyticsDashboard() {
         <p className="text-sm text-gray-500">Track conversion, enrollment, and lead source performance</p>
       </div>
 
-      <div className="grid grid-cols-5 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
         {kpiCards.map(({ label, value, icon: Icon, color }) => (
           <div key={label} className="bg-white/80 backdrop-blur-xl border border-white shadow-lg rounded-2xl p-5">
             <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center text-white mb-3`}>
@@ -50,7 +50,7 @@ function AnalyticsDashboard() {
         ))}
       </div>
 
-      <div className="grid grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <div className="bg-white/80 backdrop-blur-xl border border-white shadow-lg rounded-2xl p-6">
           <h3 className="text-sm font-semibold text-gray-600 mb-4">Lead Source Performance</h3>
           <ResponsiveContainer width="100%" height={250}>
@@ -86,15 +86,15 @@ function AnalyticsDashboard() {
             const pct = Math.max((stage.value / max) * 100, 4)
             return (
               <div key={stage.name} className="flex items-center gap-3">
-                <span className="w-24 text-xs text-gray-500">{stage.name}</span>
+                <span className="w-20 sm:w-24 text-xs text-gray-500 shrink-0">{stage.name}</span>
                 <div className="flex-1 bg-gray-100 rounded-full h-7 overflow-hidden">
                   <div
-  className="h-full bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-end px-3 text-white text-xs font-semibold transition-all"
-  style={{ width: `${pct}%` }}
-  title={`${stage.name}: ${stage.value} lead${stage.value === 1 ? '' : 's'}`}
->
-  {stage.value}
-</div>
+                    className="h-full bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-end px-3 text-white text-xs font-semibold transition-all"
+                    style={{ width: `${pct}%` }}
+                    title={`${stage.name}: ${stage.value} lead${stage.value === 1 ? '' : 's'}`}
+                  >
+                    {stage.value}
+                  </div>
                 </div>
               </div>
             )

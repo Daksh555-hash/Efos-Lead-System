@@ -5,3 +5,8 @@
   --color-secondary: #06B6D4;
   --color-accent: #8B5CF6;
 }
+
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+}

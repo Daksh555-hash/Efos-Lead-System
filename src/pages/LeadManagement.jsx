@@ -81,45 +81,47 @@ function LeadManagement() {
       </div>
 
       <div className="bg-white/80 backdrop-blur-xl border border-white shadow-lg rounded-2xl overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="bg-gray-50 text-gray-500 text-left">
-              <th className="px-5 py-3 font-medium">Name</th>
-              <th className="px-5 py-3 font-medium">Course</th>
-              <th className="px-5 py-3 font-medium">City</th>
-              <th className="px-5 py-3 font-medium">Status</th>
-              <th className="px-5 py-3 font-medium">Score</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading && (
-              <tr><td colSpan="5" className="text-center py-8 text-gray-400">Loading leads...</td></tr>
-            )}
-            {!loading && filtered.length === 0 && (
-              <tr><td colSpan="5" className="text-center py-8 text-gray-400">No leads found.</td></tr>
-            )}
-            {filtered.map((lead) => (
-              <tr key={lead.id} className="border-t border-gray-100 hover:bg-gray-50/60 transition-colors">
-                <td className="px-5 py-3">
-                  <div className="font-medium text-gray-800 capitalize">{lead.name}</div>
-                  <div className="text-gray-400 text-xs">{lead.email}</div>
-                </td>
-                <td className="px-5 py-3 text-gray-600">{lead.course_interest || '-'}</td>
-                <td className="px-5 py-3 text-gray-600">{lead.city || '-'}</td>
-                <td className="px-5 py-3">
-                  <select
-                    value={lead.status || 'New'}
-                    onChange={(e) => updateStatus(lead.id, e.target.value)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium border-0 outline-none cursor-pointer ${statusStyles[lead.status] || statusStyles.New}`}
-                  >
-                    {ALL_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </td>
-                <td className={`px-5 py-3 font-semibold ${scoreColor(lead.score)}`}>{lead.score ?? 0}</td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-gray-50 text-gray-500 text-left">
+                <th className="px-5 py-3 font-medium">Name</th>
+                <th className="px-5 py-3 font-medium">Course</th>
+                <th className="px-5 py-3 font-medium">City</th>
+                <th className="px-5 py-3 font-medium">Status</th>
+                <th className="px-5 py-3 font-medium">Score</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {loading && (
+                <tr><td colSpan="5" className="text-center py-8 text-gray-400">Loading leads...</td></tr>
+              )}
+              {!loading && filtered.length === 0 && (
+                <tr><td colSpan="5" className="text-center py-8 text-gray-400">No leads found.</td></tr>
+              )}
+              {filtered.map((lead) => (
+                <tr key={lead.id} className="border-t border-gray-100 hover:bg-gray-50/60 transition-colors">
+                  <td className="px-5 py-3">
+                    <div className="font-medium text-gray-800 capitalize">{lead.name}</div>
+                    <div className="text-gray-400 text-xs">{lead.email}</div>
+                  </td>
+                  <td className="px-5 py-3 text-gray-600">{lead.course_interest || '-'}</td>
+                  <td className="px-5 py-3 text-gray-600">{lead.city || '-'}</td>
+                  <td className="px-5 py-3">
+                    <select
+                      value={lead.status || 'New'}
+                      onChange={(e) => updateStatus(lead.id, e.target.value)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium border-0 outline-none cursor-pointer ${statusStyles[lead.status] || statusStyles.New}`}
+                    >
+                      {ALL_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </td>
+                  <td className={`px-5 py-3 font-semibold ${scoreColor(lead.score)}`}>{lead.score ?? 0}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   )

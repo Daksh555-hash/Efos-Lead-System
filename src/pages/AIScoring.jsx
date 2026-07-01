@@ -38,11 +38,10 @@ function AIScoring() {
   const colors = result ? categoryColor(result.category) : categoryColor('Cold')
 
   return (
-    <div className="flex gap-6">
-      {/* Lead list */}
-      <div className="w-72 bg-white/80 backdrop-blur-xl border border-white shadow-lg rounded-2xl p-3 h-fit">
+    <div className="flex flex-col md:flex-row gap-6">
+      <div className="w-full md:w-72 bg-white/80 backdrop-blur-xl border border-white shadow-lg rounded-2xl p-3 h-fit">
         <h2 className="text-sm font-semibold text-gray-500 px-2 mb-2">All Leads</h2>
-        <div className="flex flex-col gap-1 max-h-[60vh] overflow-y-auto">
+        <div className="flex flex-col gap-1 max-h-[40vh] md:max-h-[60vh] overflow-y-auto">
           {leads.map((lead) => (
             <button
               key={lead.id}
@@ -58,13 +57,12 @@ function AIScoring() {
         </div>
       </div>
 
-      {/* Score panel */}
-      <div className="flex-1 bg-white/80 backdrop-blur-xl border border-white shadow-lg rounded-2xl p-8">
+      <div className="flex-1 min-w-0 bg-white/80 backdrop-blur-xl border border-white shadow-lg rounded-2xl p-5 md:p-8">
         {!selected ? (
           <p className="text-gray-400 text-center">Select a lead to view AI scoring.</p>
         ) : (
           <>
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
               <div>
                 <h1 className="text-2xl font-bold text-gray-800">Lead Scoring Intelligence</h1>
                 <p className="text-sm text-gray-500">{selected.name} · {selected.email}</p>
@@ -74,9 +72,9 @@ function AIScoring() {
               </span>
             </div>
 
-            <div className="flex items-center gap-10 mb-8">
+            <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-10 mb-8">
               <ScoreRing score={result.total} color={colors.ring} />
-              <div className="flex-1 space-y-3">
+              <div className="w-full flex-1 space-y-3">
                 <ScoreBar label="Interest Score" value={result.interestScore} max={20} />
                 <ScoreBar label="Education Score" value={result.educationScore} max={45} />
                 <ScoreBar label="Engagement Score" value={result.engagementScore} max={35} />

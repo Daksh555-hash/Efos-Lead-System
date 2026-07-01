@@ -91,7 +91,7 @@ function AutomationWorkflow() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Enrollment Sequence</h1>
           <p className="text-sm text-gray-500">Automated Day 1 → Day 10 nurturing workflow</p>
@@ -105,13 +105,13 @@ function AutomationWorkflow() {
 
       {statusMsg && <p className="text-sm text-primary font-medium mb-4">{statusMsg}</p>}
 
-      <div className="grid grid-cols-5 gap-3 mb-8">
+      <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3 mb-8">
         {FOLLOWUP_DAYS.map((day) => {
           const Icon = stageInfo[day].icon
           return (
-            <div key={day} className="bg-white/80 backdrop-blur-xl border border-white shadow-md rounded-2xl p-4 text-center">
-              <div className="w-10 h-10 mx-auto rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white mb-2">
-                <Icon size={18} />
+            <div key={day} className="bg-white/80 backdrop-blur-xl border border-white shadow-md rounded-2xl p-2 sm:p-4 text-center">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 mx-auto rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white mb-2">
+                <Icon size={16} />
               </div>
               <p className="text-xs font-semibold text-gray-700">Day {day}</p>
               <p className="text-xs text-gray-400">{stageInfo[day].label}</p>
@@ -122,18 +122,18 @@ function AutomationWorkflow() {
 
       <div className="bg-white/80 backdrop-blur-xl border border-white shadow-lg rounded-2xl p-5 mb-8">
         <h3 className="text-sm font-semibold text-gray-600 mb-3">Manual Test Trigger (for demo)</h3>
-        <div className="flex flex-wrap gap-3 items-center">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:items-center">
           <select value={selectedLead} onChange={(e) => setSelectedLead(e.target.value)}
-            className="px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-sm outline-none">
+            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-sm outline-none">
             <option value="">Select a lead</option>
             {leads.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
           </select>
           <select value={selectedDay} onChange={(e) => setSelectedDay(Number(e.target.value))}
-            className="px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-sm outline-none">
+            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-sm outline-none">
             {FOLLOWUP_DAYS.map((d) => <option key={d} value={d}>Day {d} – {stageInfo[d].label}</option>)}
           </select>
           <button onClick={sendManual} disabled={sending || !selectedLead}
-            className="px-5 py-2.5 rounded-xl bg-gray-800 text-white text-sm font-medium hover:bg-gray-900 transition-all disabled:opacity-50">
+            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gray-800 text-white text-sm font-medium hover:bg-gray-900 transition-all disabled:opacity-50">
             {sending ? 'Sending...' : 'Send Now'}
           </button>
         </div>
@@ -141,29 +141,31 @@ function AutomationWorkflow() {
 
       <div className="bg-white/80 backdrop-blur-xl border border-white shadow-lg rounded-2xl overflow-hidden">
         <h3 className="text-sm font-semibold text-gray-600 px-5 pt-4 pb-2">Recent Follow-Ups</h3>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="bg-gray-50 text-gray-500 text-left">
-              <th className="px-5 py-2 font-medium">Lead</th>
-              <th className="px-5 py-2 font-medium">Day</th>
-              <th className="px-5 py-2 font-medium">Message</th>
-              <th className="px-5 py-2 font-medium">Sent At</th>
-            </tr>
-          </thead>
-          <tbody>
-            {logs.length === 0 && (
-              <tr><td colSpan="4" className="text-center py-6 text-gray-400">No follow-ups sent yet.</td></tr>
-            )}
-            {logs.map((log) => (
-              <tr key={log.id} className="border-t border-gray-100">
-                <td className="px-5 py-3 font-medium text-gray-700">{log.leads?.name || '—'}</td>
-                <td className="px-5 py-3 text-gray-600">Day {log.day_number}</td>
-                <td className="px-5 py-3 text-gray-500 max-w-xs truncate">{log.message}</td>
-                <td className="px-5 py-3 text-gray-400 text-xs">{new Date(log.sent_at).toLocaleString()}</td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-gray-50 text-gray-500 text-left">
+                <th className="px-5 py-2 font-medium">Lead</th>
+                <th className="px-5 py-2 font-medium">Day</th>
+                <th className="px-5 py-2 font-medium">Message</th>
+                <th className="px-5 py-2 font-medium">Sent At</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {logs.length === 0 && (
+                <tr><td colSpan="4" className="text-center py-6 text-gray-400">No follow-ups sent yet.</td></tr>
+              )}
+              {logs.map((log) => (
+                <tr key={log.id} className="border-t border-gray-100">
+                  <td className="px-5 py-3 font-medium text-gray-700">{log.leads?.name || '—'}</td>
+                  <td className="px-5 py-3 text-gray-600">Day {log.day_number}</td>
+                  <td className="px-5 py-3 text-gray-500 max-w-xs truncate">{log.message}</td>
+                  <td className="px-5 py-3 text-gray-400 text-xs">{new Date(log.sent_at).toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {toast && (
