@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
 import { computeKPIs, sourceBreakdown, monthlyTrend, funnelBreakdown } from '../utils/analytics'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts'
-import { Users, Flame, CheckCircle, TrendingUp, GraduationCap } from 'lucide-react'
+import { createBrandedDoc, addSectionTitle, addTable, saveDoc } from '../utils/pdfExport'
+import { Users, Flame, CheckCircle, TrendingUp, GraduationCap, Download } from 'lucide-react'
 
 function AnalyticsDashboard() {
   const [leads, setLeads] = useState([])
@@ -29,13 +30,41 @@ function AnalyticsDashboard() {
     { label: 'Conversion Rate', value: `${kpis.conversionRate}%`, icon: TrendingUp, color: 'from-cyan-500 to-blue-600' },
   ]
 
+  const handleExport = () => {
+    const doc = createBrandedDoc('Analytics Report', `${leads.length} lead(s) analyzed`)
+    let y = addSectionTitle(doc, 'Key Metrics', 44)
+    y = addTable(
+      doc,
+      ['Metric', 'Value'],
+      [
+        ['Total Leads', String(kpis.total)],
+        ['Hot Leads', String(kpis.hot)],
+        ['Qualified Leads', String(kpis.qualified)],
+        ['Enrollments', String(kpis.enrolled)],
+        ['Conversion Rate', `${kpis.conversionRate}%`],
+      ],
+      y
+    )
+    y = addSectionTitle(doc, 'Lead Source Performance', y)
+    y = addTable(doc, ['Source', 'Count'], sources.map((s) => [s.source, String(s.count)]), y)
+    y = addSectionTitle(doc, 'Enrollment Funnel', y)
+    addTable(doc, ['Stage', 'Leads'], funnel.map((f) => [f.name, String(f.value)]), y)
+    saveDoc(doc, `EFOS_Analytics_Report_${Date.now()}.pdf`)
+  }
+
   if (loading) return <p className="text-gray-400 text-center mt-10">Loading analytics...</p>
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Performance Analytics</h1>
-        <p className="text-sm text-gray-500">Track conversion, enrollment, and lead source performance</p>
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">Performance Analytics</h1>
+          <p className="text-sm text-gray-500">Track conversion, enrollment, and lead source performance</p>
+        </div>
+        <button onClick={handleExport}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 shadow-sm transition-all">
+          <Download size={16} /> Export PDF
+        </button>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">

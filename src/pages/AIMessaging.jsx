@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
 import { generateMessage } from '../utils/aiMessage'
 import { safeRun } from '../utils/safeRun'
-import { MessageCircle, Mail, Phone, Sparkles, Copy, Check } from 'lucide-react'
+import { MessageCircle, Mail, Phone, Send, Sparkles, Copy, Check } from 'lucide-react'
 
 const channels = [
   { id: 'WhatsApp', icon: MessageCircle },
   { id: 'Email', icon: Mail },
   { id: 'SMS', icon: Phone },
+  { id: 'Telegram', icon: Send },
 ]
 
 function AIMessaging() {

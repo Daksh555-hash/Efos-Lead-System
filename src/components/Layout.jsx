@@ -6,7 +6,7 @@ import { supabase } from '../supabaseClient'
 const navItems = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/admin/leads', label: 'Lead Management', icon: Users },
-  { to: '/admin/register', label: 'Add Lead', icon: UserPlus },
+  { to: '/admin/register', label: 'Add', icon: UserPlus },
   { to: '/admin/scoring', label: 'AI Scoring', icon: BrainCircuit },
   { to: '/admin/messaging', label: 'AI Messaging', icon: MessageSquare },
   { to: '/admin/automation', label: 'Automation', icon: Workflow },

@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
 import { computeKPIs, monthlyTrend } from '../utils/analytics'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import { Users, Flame, CheckCircle, GraduationCap } from 'lucide-react'
+import { createBrandedDoc, addTable, saveDoc } from '../utils/pdfExport'
+import { Users, Flame, CheckCircle, GraduationCap, Download } from 'lucide-react'
 
 function DashboardHome() {
   const [leads, setLeads] = useState([])
@@ -27,13 +28,44 @@ function DashboardHome() {
     return 'Good evening'
   }
 
+  const handleExportStudentData = () => {
+    const doc = createBrandedDoc('Student Application Data Export', `${leads.length} student(s) submitted`, 'landscape')
+    addTable(
+      doc,
+      ['Name', 'Email', 'Phone', 'City', 'Age', 'Qualification', 'Course Interested', 'Brochure', 'Visits', 'Source', 'Status', 'Score', 'Submitted On'],
+      leads.map((l) => [
+        l.name || '-',
+        l.email || '-',
+        l.phone || '-',
+        l.city || '-',
+        l.age != null ? String(l.age) : '-',
+        l.qualification || '-',
+        l.course_interest || '-',
+        l.downloaded_brochure ? 'Yes' : 'No',
+        String(l.website_visits ?? 0),
+        l.source || '-',
+        l.status || 'New',
+        String(l.score ?? 0),
+        l.created_at ? new Date(l.created_at).toLocaleDateString() : '-',
+      ]),
+      44
+    )
+    saveDoc(doc, `EFOS_Student_Data_Export_${Date.now()}.pdf`)
+  }
+
   if (loading) return <p className="text-gray-400 text-center mt-10">Loading dashboard...</p>
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">{greeting()}, Admin 👋</h1>
-        <p className="text-sm text-gray-500">Here's what's happening with your leads today</p>
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">{greeting()}, Admin 👋</h1>
+          <p className="text-sm text-gray-500">Here's what's happening with your leads today</p>
+        </div>
+        <button onClick={handleExportStudentData}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 shadow-sm transition-all">
+          <Download size={16} /> Export Student Data
+        </button>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
