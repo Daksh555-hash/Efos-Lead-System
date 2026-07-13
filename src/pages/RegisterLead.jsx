@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../supabaseClient'
-import { UserPlus, Briefcase } from 'lucide-react'
+import { UserPlus, Briefcase, UploadCloud } from 'lucide-react'
+import ImportLeads from '../components/ImportLeads'
 
 const DEPARTMENTS = ['BTech Admissions', 'Diploma Programs', 'BCA Admissions', 'MBA Admissions', 'Data Science Programs', 'General Counseling']
 const STATUSES = ['Active', 'On Leave', 'Inactive']
@@ -8,7 +9,6 @@ const STATUSES = ['Active', 'On Leave', 'Inactive']
 function RegisterLead() {
   const [tab, setTab] = useState('lead')
 
-  // ---------- Lead form state ----------
   const [form, setForm] = useState({
     name: '', email: '', phone: '', city: '',
     qualification: '', course_interest: '',
@@ -41,7 +41,6 @@ function RegisterLead() {
     }
   }
 
-  // ---------- Counselor form state ----------
   const [counselorForm, setCounselorForm] = useState({
     name: '', email: '', phone: '', specialization: '', status: 'Active'
   })
@@ -70,30 +69,36 @@ function RegisterLead() {
     "w-full px-4 py-3 rounded-xl bg-white/70 border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/30 outline-none transition-all placeholder-gray-400 text-gray-700"
 
   return (
-    <div className="flex justify-center items-start pt-6">
-      <div className="w-full max-w-md">
+    <div className="flex justify-center items-start pt-6 px-2">
+      <div className={`w-full transition-all ${tab === 'import' ? 'max-w-3xl' : 'max-w-md'}`}>
 
-        {/* Tab switcher */}
         <div className="flex gap-2 mb-4 bg-white/60 backdrop-blur-xl border border-white/80 rounded-2xl p-1.5">
           <button
             onClick={() => setTab('lead')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all ${
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all ${
               tab === 'lead' ? 'bg-gradient-to-r from-primary to-accent text-white shadow-md' : 'text-gray-500 hover:bg-white/50'
             }`}
           >
-            <UserPlus size={16} /> Add Lead
+            <UserPlus size={16} /> <span className="hidden sm:inline">Add</span> Lead
           </button>
           <button
             onClick={() => setTab('counselor')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all ${
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all ${
               tab === 'counselor' ? 'bg-gradient-to-r from-primary to-accent text-white shadow-md' : 'text-gray-500 hover:bg-white/50'
             }`}
           >
-            <Briefcase size={16} /> Add Counselor
+            <Briefcase size={16} /> <span className="hidden sm:inline">Add</span> Counselor
+          </button>
+          <button
+            onClick={() => setTab('import')}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all ${
+              tab === 'import' ? 'bg-gradient-to-r from-primary to-accent text-white shadow-md' : 'text-gray-500 hover:bg-white/50'
+            }`}
+          >
+            <UploadCloud size={16} /> Import
           </button>
         </div>
 
-        {/* --- Add Lead form --- */}
         {tab === 'lead' && (
           <div className="backdrop-blur-xl bg-white/70 border border-white/80 shadow-xl rounded-3xl p-8">
             <div className="text-center mb-6">
@@ -124,7 +129,6 @@ function RegisterLead() {
           </div>
         )}
 
-        {/* --- Add Counselor form --- */}
         {tab === 'counselor' && (
           <div className="backdrop-blur-xl bg-white/70 border border-white/80 shadow-xl rounded-3xl p-8">
             <div className="text-center mb-6">
@@ -153,6 +157,8 @@ function RegisterLead() {
             {counselorMsg && <p className={`text-center mt-4 text-sm font-medium ${counselorMsg.includes('✅') ? 'text-green-600' : 'text-red-500'}`}>{counselorMsg}</p>}
           </div>
         )}
+
+        {tab === 'import' && <ImportLeads />}
 
       </div>
     </div>
