@@ -4,7 +4,7 @@ import { pickCounselor } from '../utils/counselorAssignment'
 import { categoryColor } from '../utils/scoring'
 import { safeRun } from '../utils/safeRun'
 import { createBrandedDoc, addSectionTitle, addTable, saveDoc } from '../utils/pdfExport'
-import { UserCheck, Zap, Flame, Loader2, Phone, Mail, Download } from 'lucide-react'
+import { UserCheck, Zap, Flame, Loader2, Phone, Mail, Download, Hand } from 'lucide-react'
 
 const statusStyles = {
   Active: 'bg-green-100 text-green-700',
@@ -19,6 +19,12 @@ function CounselorHub() {
   const [assigning, setAssigning] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [statusMsg, setStatusMsg] = useState('')
+
+  // Manual assignment state
+  const [manualOpen, setManualOpen] = useState(false)
+  const [manualLead, setManualLead] = useState('')
+  const [manualCounselor, setManualCounselor] = useState('')
+  const [manualAssigning, setManualAssigning] = useState(false)
 
   useEffect(() => { fetchData() }, [])
 
@@ -79,6 +85,28 @@ function CounselorHub() {
         if (count === 0 && failed === 0) return 'No unassigned hot leads right now.'
         return `✅ Assigned ${count} hot lead(s) to Active counselors.${failed > 0 ? ` ⚠️ ${failed} failed — check console.` : ''}`
       }
+    })
+  }
+
+  const handleManualAssign = async () => {
+    if (!manualLead || !manualCounselor) return
+    await safeRun({
+      setLoading: setManualAssigning,
+      setStatusMsg,
+      action: async () => {
+        const { error } = await supabase
+          .from('leads')
+          .update({ counselor_id: manualCounselor, status: 'Qualified' })
+          .eq('id', manualLead)
+        if (error) throw error
+
+        const leadName = leads.find((l) => l.id === manualLead)?.name || 'Lead'
+        const cName = counselorName(manualCounselor)
+        setManualLead('')
+        setManualCounselor('')
+        fetchData()
+        return `✅ ${leadName} manually assigned to ${cName}.`
+      },
     })
   }
 
@@ -163,6 +191,12 @@ function CounselorHub() {
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 shadow-sm transition-all disabled:opacity-60">
             <Download size={16} /> {exporting ? 'Exporting...' : 'Export PDF'}
           </button>
+          <button onClick={() => setManualOpen(!manualOpen)}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium shadow-sm transition-all ${
+              manualOpen ? 'bg-gray-800 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+            }`}>
+            <Hand size={16} /> Manually Assign Hot Lead
+          </button>
           <button onClick={runAutoAssign} disabled={assigning}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary to-accent text-white font-semibold shadow-lg shadow-primary/30 hover:scale-[1.02] transition-all disabled:opacity-60">
             {assigning ? <Loader2 className="animate-spin" size={18} /> : <Zap size={18} />}
@@ -172,6 +206,38 @@ function CounselorHub() {
       </div>
 
       {statusMsg && <p className="text-sm text-primary font-medium mb-4">{statusMsg}</p>}
+
+      {manualOpen && (
+        <div className="bg-white/80 backdrop-blur-xl border border-white shadow-lg rounded-2xl p-5 mb-8">
+          <h3 className="text-sm font-semibold text-gray-600 mb-3 flex items-center gap-2">
+            <Hand size={16} className="text-gray-500" /> Manually Assign a Hot Lead
+          </h3>
+          <p className="text-xs text-gray-400 mb-4">Pick any unassigned hot lead and choose exactly which counselor should get it.</p>
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:items-center">
+            <select value={manualLead} onChange={(e) => setManualLead(e.target.value)}
+              className="w-full sm:w-auto flex-1 min-w-[200px] px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-sm outline-none">
+              <option value="">Select a hot lead</option>
+              {hotUnassigned.map((l) => (
+                <option key={l.id} value={l.id}>{l.name} — Score {l.score}</option>
+              ))}
+            </select>
+            <select value={manualCounselor} onChange={(e) => setManualCounselor(e.target.value)}
+              className="w-full sm:w-auto flex-1 min-w-[200px] px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-sm outline-none">
+              <option value="">Select a counselor</option>
+              {counselors.map((c) => (
+                <option key={c.id} value={c.id}>{c.name} ({c.status || 'Active'})</option>
+              ))}
+            </select>
+            <button onClick={handleManualAssign} disabled={manualAssigning || !manualLead || !manualCounselor}
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gray-800 text-white text-sm font-medium hover:bg-gray-900 transition-all disabled:opacity-50">
+              {manualAssigning ? 'Assigning...' : 'Assign'}
+            </button>
+          </div>
+          {hotUnassigned.length === 0 && (
+            <p className="text-xs text-amber-600 mt-3">No unassigned hot leads available right now.</p>
+          )}
+        </div>
+      )}
 
       <div className="bg-white/80 backdrop-blur-xl border border-white shadow-lg rounded-2xl p-5 mb-8">
         <h3 className="text-sm font-semibold text-gray-600 mb-3 flex items-center gap-2">
