@@ -4,7 +4,7 @@ import { pickCounselor } from '../utils/counselorAssignment'
 import { categoryColor } from '../utils/scoring'
 import { safeRun } from '../utils/safeRun'
 import { createBrandedDoc, addSectionTitle, addTable, saveDoc } from '../utils/pdfExport'
-import { UserCheck, Zap, Flame, Loader2, Phone, Mail, Download, Hand } from 'lucide-react'
+import { UserCheck, Zap, Flame, Loader2, Phone, Mail, Download, Hand, CheckSquare, Square } from 'lucide-react'
 
 const statusStyles = {
   Active: 'bg-green-100 text-green-700',
@@ -22,7 +22,7 @@ function CounselorHub() {
 
   // Manual assignment state
   const [manualOpen, setManualOpen] = useState(false)
-  const [manualLead, setManualLead] = useState('')
+  const [manualLeadIds, setManualLeadIds] = useState([])
   const [manualCounselor, setManualCounselor] = useState('')
   const [manualAssigning, setManualAssigning] = useState(false)
 
@@ -88,24 +88,43 @@ function CounselorHub() {
     })
   }
 
+  const toggleManualLead = (id) => {
+    setManualLeadIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    )
+  }
+
+  const selectAllManual = () => setManualLeadIds(hotUnassigned.map((l) => l.id))
+  const clearAllManual = () => setManualLeadIds([])
+
   const handleManualAssign = async () => {
-    if (!manualLead || !manualCounselor) return
+    if (manualLeadIds.length === 0 || !manualCounselor) return
     await safeRun({
       setLoading: setManualAssigning,
       setStatusMsg,
       action: async () => {
-        const { error } = await supabase
-          .from('leads')
-          .update({ counselor_id: manualCounselor, status: 'Qualified' })
-          .eq('id', manualLead)
-        if (error) throw error
+        let count = 0
+        let failed = 0
 
-        const leadName = leads.find((l) => l.id === manualLead)?.name || 'Lead'
+        for (const leadId of manualLeadIds) {
+          try {
+            const { error } = await supabase
+              .from('leads')
+              .update({ counselor_id: manualCounselor, status: 'Qualified' })
+              .eq('id', leadId)
+            if (error) throw error
+            count++
+          } catch (err) {
+            console.error(`Failed to assign lead ${leadId}:`, err.message)
+            failed++
+          }
+        }
+
         const cName = counselorName(manualCounselor)
-        setManualLead('')
+        setManualLeadIds([])
         setManualCounselor('')
         fetchData()
-        return `✅ ${leadName} manually assigned to ${cName}.`
+        return `✅ Assigned ${count} lead(s) to ${cName}.${failed > 0 ? ` ⚠️ ${failed} failed — check console.` : ''}`
       },
     })
   }
@@ -210,31 +229,58 @@ function CounselorHub() {
       {manualOpen && (
         <div className="bg-white/80 backdrop-blur-xl border border-white shadow-lg rounded-2xl p-5 mb-8">
           <h3 className="text-sm font-semibold text-gray-600 mb-3 flex items-center gap-2">
-            <Hand size={16} className="text-gray-500" /> Manually Assign a Hot Lead
+            <Hand size={16} className="text-gray-500" /> Manually Assign Hot Lead(s)
           </h3>
-          <p className="text-xs text-gray-400 mb-4">Pick any unassigned hot lead and choose exactly which counselor should get it.</p>
-          <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:items-center">
-            <select value={manualLead} onChange={(e) => setManualLead(e.target.value)}
-              className="w-full sm:w-auto flex-1 min-w-[200px] px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-sm outline-none">
-              <option value="">Select a hot lead</option>
-              {hotUnassigned.map((l) => (
-                <option key={l.id} value={l.id}>{l.name} — Score {l.score}</option>
-              ))}
-            </select>
-            <select value={manualCounselor} onChange={(e) => setManualCounselor(e.target.value)}
-              className="w-full sm:w-auto flex-1 min-w-[200px] px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-sm outline-none">
-              <option value="">Select a counselor</option>
-              {counselors.map((c) => (
-                <option key={c.id} value={c.id}>{c.name} ({c.status || 'Active'})</option>
-              ))}
-            </select>
-            <button onClick={handleManualAssign} disabled={manualAssigning || !manualLead || !manualCounselor}
-              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gray-800 text-white text-sm font-medium hover:bg-gray-900 transition-all disabled:opacity-50">
-              {manualAssigning ? 'Assigning...' : 'Assign'}
-            </button>
-          </div>
-          {hotUnassigned.length === 0 && (
-            <p className="text-xs text-amber-600 mt-3">No unassigned hot leads available right now.</p>
+          <p className="text-xs text-gray-400 mb-4">Select as many leads as you like, then pick one counselor to assign them all to.</p>
+
+          {hotUnassigned.length === 0 ? (
+            <p className="text-sm text-amber-600">No unassigned hot leads available right now.</p>
+          ) : (
+            <>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-gray-500">
+                  {manualLeadIds.length} of {hotUnassigned.length} selected
+                </span>
+                <div className="flex gap-3">
+                  <button onClick={selectAllManual} className="text-xs font-medium text-primary hover:text-accent">Select All</button>
+                  <button onClick={clearAllManual} className="text-xs font-medium text-gray-400 hover:text-gray-600">Clear</button>
+                </div>
+              </div>
+
+              <div className="border border-gray-200 rounded-xl max-h-56 overflow-y-auto mb-4 divide-y divide-gray-100">
+                {hotUnassigned.map((lead) => {
+                  const checked = manualLeadIds.includes(lead.id)
+                  return (
+                    <label key={lead.id} className="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-gray-50 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleManualLead(lead.id)}
+                        className="w-4 h-4 accent-primary shrink-0"
+                      />
+                      {checked ? <CheckSquare size={14} className="text-primary shrink-0" /> : <Square size={14} className="text-gray-300 shrink-0" />}
+                      <span className="flex-1 text-sm font-medium text-gray-700 truncate">{lead.name}</span>
+                      <span className="text-xs text-gray-400 shrink-0">{lead.course_interest || '—'}</span>
+                      <span className="text-xs font-semibold text-red-500 shrink-0">Score: {lead.score}</span>
+                    </label>
+                  )
+                })}
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+                <select value={manualCounselor} onChange={(e) => setManualCounselor(e.target.value)}
+                  className="w-full sm:flex-1 px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-sm outline-none">
+                  <option value="">Select a counselor</option>
+                  {counselors.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name} ({c.status || 'Active'})</option>
+                  ))}
+                </select>
+                <button onClick={handleManualAssign} disabled={manualAssigning || manualLeadIds.length === 0 || !manualCounselor}
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gray-800 text-white text-sm font-medium hover:bg-gray-900 transition-all disabled:opacity-50 whitespace-nowrap">
+                  {manualAssigning ? 'Assigning...' : `Assign ${manualLeadIds.length || ''} Lead${manualLeadIds.length === 1 ? '' : 's'}`}
+                </button>
+              </div>
+            </>
           )}
         </div>
       )}
