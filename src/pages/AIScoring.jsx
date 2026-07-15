@@ -15,13 +15,20 @@ function AIScoring() {
     fetchLeads()
   }, [])
 
-  const fetchLeads = async () => {
-    const { data, error } = await supabase.from('leads').select('*').order('created_at', { ascending: false })
-    if (!error) {
-      setLeads(data)
-      if (data.length > 0) selectLead(data[0])
+  const fetchLeads = async (preserveSelectionId) => {
+  const { data, error } = await supabase.from('leads').select('*').order('created_at', { ascending: false })
+  if (!error) {
+    setLeads(data)
+    if (preserveSelectionId) {
+      const stillThere = data.find((l) => l.id === preserveSelectionId)
+      if (stillThere) {
+        selectLead(stillThere)
+        return
+      }
     }
+    if (data.length > 0) selectLead(data[0])
   }
+}
 
   const selectLead = (lead) => {
     setSelected(lead)
@@ -29,12 +36,12 @@ function AIScoring() {
   }
 
   const saveScore = async () => {
-    if (!selected || !result) return
-    setSaving(true)
-    await supabase.from('leads').update({ score: result.total }).eq('id', selected.id)
-    setSaving(false)
-    fetchLeads()
-  }
+  if (!selected || !result) return
+  setSaving(true)
+  await supabase.from('leads').update({ score: result.total }).eq('id', selected.id)
+  setSaving(false)
+  fetchLeads(selected.id)
+}
 
   const handleExport = () => {
     const doc = createBrandedDoc('AI Lead Scoring Report', `${leads.length} lead(s) evaluated`)

@@ -116,9 +116,14 @@ function PublicApply() {
 
         {msg && <p className={`text-center mt-4 text-sm font-medium ${msg.includes('✅') ? 'text-green-600' : 'text-red-500'}`}>{msg}</p>}
 
-        <p className="text-center text-xs text-gray-400 mt-6">
-          <Link to="/login" className="text-primary font-medium">Staff Login</Link>
-        </p>
+                <div className="text-center mt-6 space-y-2">
+          <p className="text-xs text-gray-400">
+            <Link to="/login" className="text-primary font-medium hover:text-accent transition-colors">Staff Login</Link>
+          </p>
+          <p className="text-xs text-gray-400">
+            <Link to="/counselor-login" className="text-primary font-medium hover:text-accent transition-colors">Counselor Login</Link>
+          </p>
+        </div>
       </div>
     </div>
   )

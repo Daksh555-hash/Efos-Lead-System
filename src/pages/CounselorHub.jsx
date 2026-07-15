@@ -25,6 +25,7 @@ function CounselorHub() {
   const [manualLeadIds, setManualLeadIds] = useState([])
   const [manualCounselor, setManualCounselor] = useState('')
   const [manualAssigning, setManualAssigning] = useState(false)
+  const [viewingNotes, setViewingNotes] = useState(null)
 
   useEffect(() => { fetchData() }, [])
 
@@ -333,16 +334,17 @@ function CounselorHub() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-gray-50 text-gray-500 text-left">
+                            <tr className="bg-gray-50 text-gray-500 text-left">
                 <th className="px-5 py-2 font-medium">Lead</th>
                 <th className="px-5 py-2 font-medium">Priority</th>
                 <th className="px-5 py-2 font-medium">Counselor</th>
                 <th className="px-5 py-2 font-medium">Status</th>
+                <th className="px-5 py-2 font-medium">Notes</th>
               </tr>
             </thead>
             <tbody>
               {assignedLeads.length === 0 && (
-                <tr><td colSpan="4" className="text-center py-6 text-gray-400">No leads assigned yet.</td></tr>
+                <tr><td colSpan="5" className="text-center py-6 text-gray-400">No leads assigned yet.</td></tr>
               )}
               {assignedLeads.map((lead) => {
                 const colors = categoryColor(lead.score > 70 ? 'Hot' : lead.score > 40 ? 'Warm' : 'Cold')
@@ -354,8 +356,20 @@ function CounselorHub() {
                         {lead.score > 70 ? 'HOT' : lead.score > 40 ? 'WARM' : 'COLD'}
                       </span>
                     </td>
-                    <td className="px-5 py-3 text-gray-600">{counselorName(lead.counselor_id)}</td>
+                                        <td className="px-5 py-3 text-gray-600">{counselorName(lead.counselor_id)}</td>
                     <td className="px-5 py-3 text-gray-500">{lead.status}</td>
+                    <td className="px-5 py-3">
+                      {lead.notes ? (
+                        <button
+                          onClick={() => setViewingNotes(lead)}
+                          className="px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-medium hover:bg-primary hover:text-white transition-all"
+                        >
+                          View Notes
+                        </button>
+                      ) : (
+                        <span className="text-xs text-gray-400">No notes</span>
+                      )}
+                    </td>
                   </tr>
                 )
               })}
@@ -363,6 +377,39 @@ function CounselorHub() {
           </table>
         </div>
       </div>
+      {viewingNotes && (
+        <>
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" onClick={() => setViewingNotes(null)} />
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-white rounded-2xl shadow-2xl z-50 overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-primary to-accent">
+              <div>
+                <h3 className="text-white font-semibold">{viewingNotes.name}</h3>
+                <p className="text-white/70 text-xs">Counselor Notes · {counselorName(viewingNotes.counselor_id)}</p>
+              </div>
+              <button
+                onClick={() => setViewingNotes(null)}
+                className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center text-white hover:bg-white/30 transition-colors text-lg"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="px-6 py-5 max-h-80 overflow-y-auto">
+              {viewingNotes.notes ? (
+                <div className="space-y-2">
+                  {viewingNotes.notes.split('\n').filter(Boolean).map((note, i) => (
+                    <div key={i} className="px-4 py-3 rounded-xl bg-gray-50 text-sm text-gray-700 border border-gray-100">
+                      {note}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-400 text-center py-4">No notes recorded yet.</p>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
     </div>
   )
 }
