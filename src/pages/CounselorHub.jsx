@@ -74,6 +74,7 @@ function CounselorHub() {
             if (!counselor) throw new Error('No active counselors found.')
             const { error } = await supabase.from('leads').update({ counselor_id: counselor.id, status: 'Qualified' }).eq('id', lead.id)
             if (error) throw error
+            await supabase.from('messages').insert([{ counselor_id: counselor.id, sender_name: 'System', message: `New hot lead auto-assigned: ${lead.name}` }])
             working.push({ counselor_id: counselor.id })
             count++
           } catch (err) {
@@ -104,6 +105,8 @@ function CounselorHub() {
           try {
             const { error } = await supabase.from('leads').update({ counselor_id: manualCounselor, status: 'Qualified' }).eq('id', leadId)
             if (error) throw error
+            const leadName = leads.find(l => l.id === leadId)?.name || 'a student'
+            await supabase.from('messages').insert([{ counselor_id: manualCounselor, sender_name: 'Admin', message: `New lead assigned to you: ${leadName}` }])
             count++
           } catch (err) {
             console.error(`Failed to assign lead ${leadId}:`, err.message)
