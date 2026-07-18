@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
 import { calculateScore, categoryColor } from '../utils/scoring'
 import { createBrandedDoc, addTable, saveDoc } from '../utils/pdfExport'
+import { exportToCSV, exportToExcel } from '../utils/exportData'
+import ExportMenu from '../components/ExportMenu'
 import ScoreRing from '../components/ScoreRing'
-import { Zap, Download } from 'lucide-react'
+import { Zap } from 'lucide-react'
 
 function AIScoring() {
   const [leads, setLeads] = useState([])
@@ -16,19 +18,19 @@ function AIScoring() {
   }, [])
 
   const fetchLeads = async (preserveSelectionId) => {
-  const { data, error } = await supabase.from('leads').select('*').order('created_at', { ascending: false })
-  if (!error) {
-    setLeads(data)
-    if (preserveSelectionId) {
-      const stillThere = data.find((l) => l.id === preserveSelectionId)
-      if (stillThere) {
-        selectLead(stillThere)
-        return
+    const { data, error } = await supabase.from('leads').select('*').order('created_at', { ascending: false })
+    if (!error) {
+      setLeads(data)
+      if (preserveSelectionId) {
+        const stillThere = data.find((l) => l.id === preserveSelectionId)
+        if (stillThere) {
+          selectLead(stillThere)
+          return
+        }
       }
+      if (data.length > 0) selectLead(data[0])
     }
-    if (data.length > 0) selectLead(data[0])
   }
-}
 
   const selectLead = (lead) => {
     setSelected(lead)
@@ -36,22 +38,26 @@ function AIScoring() {
   }
 
   const saveScore = async () => {
-  if (!selected || !result) return
-  setSaving(true)
-  await supabase.from('leads').update({ score: result.total }).eq('id', selected.id)
-  setSaving(false)
-  fetchLeads(selected.id)
-}
+    if (!selected || !result) return
+    setSaving(true)
+    await supabase.from('leads').update({ score: result.total }).eq('id', selected.id)
+    setSaving(false)
+    fetchLeads(selected.id)
+  }
 
-  const handleExport = () => {
+  const exportHeaders = ['Name', 'Category', 'Interest', 'Education', 'Engagement', 'Total']
+  const exportRows = () => leads.map((lead) => {
+    const r = calculateScore(lead)
+    return [lead.name || '-', r.category, String(r.interestScore), String(r.educationScore), String(r.engagementScore), String(r.total)]
+  })
+
+  const handleExportPDF = () => {
     const doc = createBrandedDoc('AI Lead Scoring Report', `${leads.length} lead(s) evaluated`)
-    const rows = leads.map((lead) => {
-      const r = calculateScore(lead)
-      return [lead.name || '-', r.category, String(r.interestScore), String(r.educationScore), String(r.engagementScore), String(r.total)]
-    })
-    addTable(doc, ['Name', 'Category', 'Interest', 'Education', 'Engagement', 'Total'], rows, 44)
+    addTable(doc, exportHeaders, exportRows(), 44)
     saveDoc(doc, `EFOS_AI_Scoring_Report_${Date.now()}.pdf`)
   }
+  const handleExportCSV = () => exportToCSV(exportHeaders, exportRows(), `EFOS_AI_Scoring_Report_${Date.now()}.csv`)
+  const handleExportExcel = () => exportToExcel([{ name: 'AI Scoring', headers: exportHeaders, rows: exportRows() }], `EFOS_AI_Scoring_Report_${Date.now()}.xlsx`)
 
   const colors = result ? categoryColor(result.category) : categoryColor('Cold')
 
@@ -62,10 +68,7 @@ function AIScoring() {
           <h1 className="text-2xl font-bold text-gray-800">AI Lead Scoring</h1>
           <p className="text-sm text-gray-500">{leads.length} lead(s) in the system</p>
         </div>
-        <button onClick={handleExport}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 shadow-sm transition-all">
-          <Download size={16} /> Export PDF
-        </button>
+        <ExportMenu onPDF={handleExportPDF} onCSV={handleExportCSV} onExcel={handleExportExcel} />
       </div>
 
       <div className="flex flex-col md:flex-row gap-6">

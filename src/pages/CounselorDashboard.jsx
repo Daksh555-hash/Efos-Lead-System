@@ -11,6 +11,8 @@ import {
   Download, PhoneCall, PhoneOff, PhoneMissed, CalendarPlus,
   AlertTriangle
 } from 'lucide-react'
+import ExportMenu from '../components/ExportMenu'
+import { exportToCSV, exportToExcel } from '../utils/dataExport'
 
 // ── Helper: Relative time ──
 function timeAgo(dateStr) {
@@ -246,6 +248,27 @@ function CounselorDashboard() {
     )
     saveDoc(doc, `EFOS_Counselor_Report_${counselor?.name?.replace(/\s/g, '_')}_${Date.now()}.pdf`)
   }
+    const handleExportCSV = () => {
+    const headers = ['Name', 'Email', 'Phone', 'Course', 'Status', 'Score', 'Last Contact', 'Call Status']
+    const rows = leads.map(l => [
+        l.name || '-', l.email || '-', l.phone || '-', l.course_interest || '-',
+        l.status || 'New', String(l.score || 0),
+        l.last_contacted ? new Date(l.last_contacted).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }) : 'Never',
+        l.call_status || '-',
+    ])
+    exportToCSV(headers, rows, `EFOS_Counselor_Report_${counselor?.name?.replace(/\s/g, '_')}_${Date.now()}.csv`)
+  }
+
+  const handleExportExcel = () => {
+    const headers = ['Name', 'Email', 'Phone', 'Course', 'Status', 'Score', 'Last Contact', 'Call Status']
+    const rows = leads.map(l => [
+        l.name || '-', l.email || '-', l.phone || '-', l.course_interest || '-',
+        l.status || 'New', String(l.score || 0),
+        l.last_contacted ? new Date(l.last_contacted).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }) : 'Never',
+        l.call_status || '-',
+    ])
+    exportToExcel([{ name: 'Assigned Leads', headers, rows }], `EFOS_Counselor_Report_${counselor?.name?.replace(/\s/g, '_')}_${Date.now()}.xlsx`)
+  }
 
   // ── Greeting ──
   const greeting = () => {
@@ -278,12 +301,11 @@ function CounselorDashboard() {
             Here's your lead pipeline for today · {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Asia/Kolkata' })}
           </p>
         </div>
-        <button
-          onClick={handleExportPDF}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 shadow-sm transition-all"
-        >
-          <Download size={16} /> Download My Leads
-        </button>
+        <ExportMenu 
+          onPDF={handleExportPDF} 
+          onCSV={handleExportCSV} 
+          onExcel={handleExportExcel} 
+        />
       </div>
 
       {/* ==================== KPI CARDS ==================== */}

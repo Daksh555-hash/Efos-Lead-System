@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
-import { Search, Download } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { createBrandedDoc, addTable, saveDoc } from '../utils/pdfExport'
+import { exportToCSV, exportToExcel } from '../utils/exportData'
+import ExportMenu from '../components/ExportMenu'
 
 const statusStyles = {
   New: 'bg-gray-100 text-gray-600',
@@ -52,23 +54,18 @@ function LeadManagement() {
     return matchesSearch && matchesStatus
   })
 
-  const handleExport = () => {
+  const exportHeaders = ['Name', 'Email', 'Course', 'City', 'Status', 'Score']
+  const exportRows = () => filtered.map((l) => [
+    l.name || '-', l.email || '-', l.course_interest || '-', l.city || '-', l.status || 'New', String(l.score ?? 0),
+  ])
+
+  const handleExportPDF = () => {
     const doc = createBrandedDoc('Lead Management Report', `${filtered.length} lead(s) — filter: ${statusFilter}`)
-    addTable(
-      doc,
-      ['Name', 'Email', 'Course', 'City', 'Status', 'Score'],
-      filtered.map((l) => [
-        l.name || '-',
-        l.email || '-',
-        l.course_interest || '-',
-        l.city || '-',
-        l.status || 'New',
-        String(l.score ?? 0),
-      ]),
-      44
-    )
+    addTable(doc, exportHeaders, exportRows(), 44)
     saveDoc(doc, `EFOS_Lead_Management_${Date.now()}.pdf`)
   }
+  const handleExportCSV = () => exportToCSV(exportHeaders, exportRows(), `EFOS_Lead_Management_${Date.now()}.csv`)
+  const handleExportExcel = () => exportToExcel([{ name: 'Leads', headers: exportHeaders, rows: exportRows() }], `EFOS_Lead_Management_${Date.now()}.xlsx`)
 
   return (
     <div>
@@ -77,10 +74,7 @@ function LeadManagement() {
           <h1 className="text-2xl font-bold text-gray-800">Lead Inventory</h1>
           <p className="text-sm text-gray-500">{filtered.length} leads found</p>
         </div>
-        <button onClick={handleExport}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 shadow-sm transition-all">
-          <Download size={16} /> Export PDF
-        </button>
+        <ExportMenu onPDF={handleExportPDF} onCSV={handleExportCSV} onExcel={handleExportExcel} />
       </div>
 
       <div className="flex flex-wrap gap-3 mb-5">

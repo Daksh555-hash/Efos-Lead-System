@@ -6,7 +6,9 @@ import { safeRun } from '../utils/safeRun'
 import { sendTelegramWithOptionalFile } from '../utils/telegram'
 import { sendEmail } from '../utils/email'
 import { createBrandedDoc, addTable, saveDoc } from '../utils/pdfExport'
-import { Mail, MessageCircle, Gift, Bell, Flag, PlayCircle, Loader2, CheckCircle, Send, Phone, Globe, Paperclip, X, Download } from 'lucide-react'
+import { exportToCSV, exportToExcel } from '../utils/exportData'
+import ExportMenu from '../components/ExportMenu'
+import { Mail, MessageCircle, Gift, Bell, Flag, PlayCircle, Loader2, CheckCircle, Send, Phone, Globe, Paperclip, X } from 'lucide-react'
 
 const stageInfo = {
   1: { label: 'Welcome Message', icon: MessageCircle },
@@ -143,32 +145,57 @@ function AutomationWorkflow() {
     })
   }
 
-  const handleExport = async () => {
+  const fetchExportData = async () => {
+    const { data, error } = await supabase
+      .from('follow_ups')
+      .select('*, leads(name)')
+      .order('sent_at', { ascending: false })
+    if (error) throw error
+    const headers = ['Lead', 'Day', 'Channel', 'Message', 'Sent At']
+    const rows = data.map((log) => [
+      log.leads?.name || '-',
+      `Day ${log.day_number}`,
+      log.channel || '-',
+      log.message || '-',
+      new Date(log.sent_at).toLocaleString(),
+    ])
+    return { headers, rows, count: data.length }
+  }
+
+  const handleExportPDF = async () => {
     await safeRun({
       setLoading: setExporting,
       setStatusMsg,
       action: async () => {
-        const { data, error } = await supabase
-          .from('follow_ups')
-          .select('*, leads(name)')
-          .order('sent_at', { ascending: false })
-        if (error) throw error
-
-        const doc = createBrandedDoc('Automation Follow-Up Report', `${data.length} follow-up(s) sent`)
-        addTable(
-          doc,
-          ['Lead', 'Day', 'Channel', 'Message', 'Sent At'],
-          data.map((log) => [
-            log.leads?.name || '-',
-            `Day ${log.day_number}`,
-            log.channel || '-',
-            (log.message || '').slice(0, 90),
-            new Date(log.sent_at).toLocaleString(),
-          ]),
-          44
-        )
+        const { headers, rows, count } = await fetchExportData()
+        const doc = createBrandedDoc('Automation Follow-Up Report', `${count} follow-up(s) sent`)
+        addTable(doc, headers, rows.map((r) => [r[0], r[1], r[2], String(r[3]).slice(0, 90), r[4]]), 44)
         saveDoc(doc, `EFOS_Automation_Report_${Date.now()}.pdf`)
-        return '✅ Export downloaded.'
+        return '✅ PDF downloaded.'
+      },
+    })
+  }
+
+  const handleExportCSV = async () => {
+    await safeRun({
+      setLoading: setExporting,
+      setStatusMsg,
+      action: async () => {
+        const { headers, rows } = await fetchExportData()
+        exportToCSV(headers, rows, `EFOS_Automation_Report_${Date.now()}.csv`)
+        return '✅ CSV downloaded.'
+      },
+    })
+  }
+
+  const handleExportExcel = async () => {
+    await safeRun({
+      setLoading: setExporting,
+      setStatusMsg,
+      action: async () => {
+        const { headers, rows } = await fetchExportData()
+        exportToExcel([{ name: 'Follow-Ups', headers, rows }], `EFOS_Automation_Report_${Date.now()}.xlsx`)
+        return '✅ Excel file downloaded.'
       },
     })
   }
@@ -181,10 +208,7 @@ function AutomationWorkflow() {
           <p className="text-sm text-gray-500">Automated Day 1 → Day 10 nurturing workflow</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button onClick={handleExport} disabled={exporting}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 shadow-sm transition-all disabled:opacity-60">
-            <Download size={16} /> {exporting ? 'Exporting...' : 'Export PDF'}
-          </button>
+          <ExportMenu onPDF={handleExportPDF} onCSV={handleExportCSV} onExcel={handleExportExcel} loading={exporting} />
           <button onClick={runAutomationCheck} disabled={running}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary to-accent text-white font-semibold shadow-lg shadow-primary/30 hover:scale-[1.02] transition-all disabled:opacity-60">
             {running ? <Loader2 className="animate-spin" size={18} /> : <PlayCircle size={18} />}
